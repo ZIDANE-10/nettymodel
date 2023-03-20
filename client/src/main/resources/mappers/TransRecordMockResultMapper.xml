@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jian.nettyclient.mapper.TransRecordMockResultMapper">
+    <resultMap id="BaseResultMap" type="com.jian.nettyclient.domain.TransRecordMockResult">
+        <id column="ID" jdbcType="BIGINT" property="id"/>
+        <result column="SER23" jdbcType="CHAR" property="ser23"/>
+        <result column="TOUCH_FLAG" jdbcType="CHAR" property="touchFlag"/>
+        <result column="UPD_TIME" jdbcType="TIMESTAMP" property="updTime"/>
+        <result column="REQ" jdbcType="LONGVARBINARY" property="req"/>
+        <result column="RESP" jdbcType="LONGVARBINARY" property="resp"/>
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from T_TRANS_RECORD_MOCK_RESULT
+    where ID = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <insert id="insertSelect">
+        insert into T_TRANS_RECORD_MOCK_RESULT
+        (SER23,REQ, RESP)
+        (SELECT SER23, REQ, RESP FROM T_TRANS_RECORD  WHERE SER23=#{ser23})
+        on duplicate key update UPD_TIME=CURRENT_TIMESTAMP;
+    </insert>
+    <update id="updateTouchFlag">
+        update T_TRANS_RECORD_MOCK_RESULT set touch_flag = '1' where ser23=#{ser23} limit 1
+    </update>
+    <select id="selectBySer23" resultMap="BaseResultMap">
+        select RESP from T_TRANS_RECORD_MOCK_RESULT where touch_flag = '1' limit 1
+    </select>
+</mapper>

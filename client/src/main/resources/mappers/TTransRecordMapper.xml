@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jian.nettyclient.mapper.TTransRecordMapper">
+    <resultMap id="BaseResultMap" type="com.jian.nettyclient.domain.TTransRecord">
+        <id column="ID" jdbcType="BIGINT" property="id"/>
+        <result column="SER23" jdbcType="VARCHAR" property="ser23"/>
+        <result column="REQ" jdbcType="LONGVARBINARY" property="req"/>
+        <result column="RESP" jdbcType="LONGVARBINARY" property="resp"/>
+    </resultMap>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from T_TRANS_RECORD
+    where ID = #{id,jdbcType=BIGINT}
+  </delete>
+
+    <insert id="insert" parameterType="com.jian.nettyclient.domain.TTransRecord">
+    insert into T_TRANS_RECORD (ID, SER23, REQ, 
+      RESP)
+    values (#{id,jdbcType=BIGINT}, #{ser23,jdbcType=VARCHAR}, #{req,jdbcType=LONGVARBINARY}, 
+      #{resp,jdbcType=LONGVARBINARY})
+  </insert>
+
+    <update id="updateByPrimaryKey" parameterType="com.jian.nettyclient.domain.TTransRecord">
+    update T_TRANS_RECORD
+    set SER23 = #{ser23,jdbcType=VARCHAR},
+      REQ = #{req,jdbcType=LONGVARBINARY},
+      RESP = #{resp,jdbcType=LONGVARBINARY}
+    where ID = #{id,jdbcType=BIGINT}
+  </update>
+
+    <select id="selectBySer23" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select ID, SER23, REQ, RESP
+    from T_TRANS_RECORD
+    where SER23 = #{ser23,jdbcType=VARCHAR}
+  </select>
+
+    <select id="selectByIdRange" resultMap="BaseResultMap">
+    select ID, SER23, REQ, RESP
+    from T_TRANS_RECORD where id &gt;=#{sta} and id &lt;#{end}
+  </select>
+</mapper>
