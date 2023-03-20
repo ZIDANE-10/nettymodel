@@ -5,6 +5,9 @@ import com.jian.nettyclient.mapper.TTransRecordMapper;
 import com.jian.nettyclient.util.XMLUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -12,8 +15,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -130,6 +132,8 @@ public class BaseService {
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .option(ChannelOption.SO_REUSEADDR,true)
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .handler(new ChannelInitializer<SocketChannel>() {
 
                     @Override
@@ -142,8 +146,42 @@ public class BaseService {
                 });
         try {
             ChannelFuture channelFuture = bootstrap.connect().sync();
-            return channelFuture.isDone();
+            for (int i=0;i<concurrent;i++){
+                new Thread(()->{
+                    Channel channel = channelFuture.channel();
+                    ByteBuf byteBuf = null;
+                    FullHttpRequest request = null;
+                    while (true){
+                        List<TTransRecord> records = transService.getData();
+                        if (records == null || records.isEmpty()){
+                            break;
+                        }
+                        for (TTransRecord record : records) {
+                            byteBuf = PooledByteBufAllocator.DEFAULT.directBuffer(record.getReq().length);
+                            byteBuf.writeBytes(record.getReq());
+                            request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/sendTest",byteBuf);
+                            request.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/xml; charset=UTF-8");
+                            request.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
+                            ChannelFuture future = channel.writeAndFlush(request);
+                            Channel read = future.channel().read();
+
+                        }
+                    }
+                },"client-"+i).start();
+
+            }
+            return true;
         } catch (InterruptedException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean shutdownNettyClient(){
+        try {
+            this.clientWorker.shutdownGracefully();
+            return true;
+        }catch (Exception e){
             e.printStackTrace();
             return false;
         }

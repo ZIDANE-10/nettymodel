@@ -2,6 +2,7 @@ package com.jian.nettyclient.service;
 
 import com.jian.nettyclient.domain.TTransRecord;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,16 +30,7 @@ public class HttpClientHandler extends SimpleChannelInboundHandler<FullHttpRespo
     private TTransService tTransService;
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, FullHttpResponse response) throws Exception {
-        ByteBuf content = response.content();
-        InputStream xml = getXmlStr(content);
-        String ser23 = getSer23(xml);
-        System.out.println(ser23);
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
         FullHttpRequest request = null;
         ByteBuf byteBuf = null;
         while (true){
@@ -51,7 +42,7 @@ public class HttpClientHandler extends SimpleChannelInboundHandler<FullHttpRespo
                 break;
             }
             for (TTransRecord record : records) {
-                byteBuf = Unpooled.directBuffer(record.getReq().length);
+                byteBuf = PooledByteBufAllocator.DEFAULT.directBuffer(record.getReq().length);
                 byteBuf.writeBytes(record.getReq());
                 request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/sendTest",byteBuf);
                 request.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/xml; charset=UTF-8");
@@ -60,7 +51,20 @@ public class HttpClientHandler extends SimpleChannelInboundHandler<FullHttpRespo
             }
 
         }
+    }
 
+    @Override
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, FullHttpResponse response) throws Exception {
+        ByteBuf content = response.content();
+        InputStream xml = getXmlStr(content);
+        String ser23 = getSer23(xml);
+        System.out.println(ser23);
+        content.release();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
     }
 
     public boolean pause() {
