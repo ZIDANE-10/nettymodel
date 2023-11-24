@@ -163,8 +163,11 @@ public class BaseService {
                             request.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/xml; charset=UTF-8");
                             request.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
                             ChannelFuture future = channel.writeAndFlush(request);
-                            Channel read = future.channel().read();
-
+                            try {
+                                future.sync().channel().read();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 },"client-"+i).start();

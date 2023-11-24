@@ -29,29 +29,29 @@ public class HttpClientHandler extends SimpleChannelInboundHandler<FullHttpRespo
     @Resource
     private TTransService tTransService;
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        FullHttpRequest request = null;
-        ByteBuf byteBuf = null;
-        while (true){
-            while (!this.start.get()){
-                Thread.sleep(1000L);
-            }
-            List<TTransRecord> records = tTransService.getData();
-            if (records == null || records.isEmpty()){
-                break;
-            }
-            for (TTransRecord record : records) {
-                byteBuf = PooledByteBufAllocator.DEFAULT.directBuffer(record.getReq().length);
-                byteBuf.writeBytes(record.getReq());
-                request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/sendTest",byteBuf);
-                request.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/xml; charset=UTF-8");
-                request.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
-                ctx.channel().writeAndFlush(request);
-            }
-
-        }
-    }
+//    @Override
+//    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//        FullHttpRequest request = null;
+//        ByteBuf byteBuf = null;
+//        while (true){
+//            while (!this.start.get()){
+//                Thread.sleep(1000L);
+//            }
+//            List<TTransRecord> records = tTransService.getData();
+//            if (records == null || records.isEmpty()){
+//                break;
+//            }
+//            for (TTransRecord record : records) {
+//                byteBuf = PooledByteBufAllocator.DEFAULT.directBuffer(record.getReq().length);
+//                byteBuf.writeBytes(record.getReq());
+//                request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/sendTest",byteBuf);
+//                request.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/xml; charset=UTF-8");
+//                request.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
+//                ctx.channel().writeAndFlush(request);
+//            }
+//
+//        }
+//    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, FullHttpResponse response) throws Exception {
@@ -59,7 +59,6 @@ public class HttpClientHandler extends SimpleChannelInboundHandler<FullHttpRespo
         InputStream xml = getXmlStr(content);
         String ser23 = getSer23(xml);
         System.out.println(ser23);
-        content.release();
     }
 
     @Override
